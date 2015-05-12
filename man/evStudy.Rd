@@ -7,13 +7,19 @@
 evStudy(df.events, df.stocks, event.window = 2, estim.window = 100)
 }
 \arguments{
-\item{df.events}{The data frame containing the list of events.}
+\item{df.events}{The data frame containing the list of events. The first column of the data frame should be 'event_id'(type Integer) numbering the events from 1 to n. The second column shoud be 'event_date' (type Date). The third column should contain 'company_id' (type Chr).}
+
+\item{df.stocks}{The data frame contains the list of trading dates. The first column should contain the dates of trading days (type Date). The second column should contain the values of the market index (type Numeric). The following columns should contain the prices of the companies' securities.}
+
+\item{event.window}{The first half of the event window (default is 2, thus the whole event window length is 5).}
+
+\item{estim.window}{The length of the estimation window (default is 100). It is adjacent to the beginning of the event window.}
 }
 \description{
 This function runs event study calculations using the standard market model.
 }
 \examples{
-evStudy()
+evStudy(events, stocks)
 }
 \keyword{analysis}
 \keyword{event}
