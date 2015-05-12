@@ -71,7 +71,7 @@ print("Values of Theta greater than 1.96 in absolute value are statistically sig
 
 # plot of ARs
 yARlim <- c(-max(abs(df.ars$Avg[1:ev.length]*100)+1),max(abs(df.ars$Avg[1:ev.length]*100)+1))
-plot(df.ars$Avg[1:ev.length]*100, type="l", lwd=2, pch=19, main="AR, %", xaxt="n", yaxt="n", ylab="", xlab="День окна события", ylim=yARlim, bty="n")
+plot(df.ars$Avg[1:ev.length]*100, type="l", lwd=2, pch=19, main="AR, %", xaxt="n", yaxt="n", ylab="", xlab="", ylim=yARlim, bty="n")
 axis(1, at=c(1:ev.length), labels=df.ars[1:ev.length,1], pos=0)
 axis(2, pos=event.window+1, las=1)
 abline(v=event.window+1)
@@ -79,7 +79,7 @@ abline(h=0)
 
 # plot of CARs
 yCARlim <- c(-max(abs(df.ars$CAR[1:ev.length]*100)+1),max(abs(df.ars$CAR[1:ev.length]*100)+1))
-plot(df.ars$CAR[1:ev.length]*100, type="l", lwd=2, pch=19, main="CAR, %", xaxt="n", yaxt="n", xlab="День окна события", ylab="", xaxs="i", yaxs="i", bty="n", ylim=yCARlim)
+plot(df.ars$CAR[1:ev.length]*100, type="l", lwd=2, pch=19, main="CAR, %", xaxt="n", yaxt="n", xlab="", ylab="", xaxs="i", yaxs="i", bty="n", ylim=yCARlim)
 axis(1, at=c(1:ev.length), labels=df.ars[1:ev.length,1], pos=0)
 axis(2, pos=event.window+1, las=1)
 abline(v=event.window+1)
