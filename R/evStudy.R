@@ -1,7 +1,7 @@
 #' An Event Study Analysis Function
 #'
 #' This function runs event study calculations using the standard market model.
-#' @param df.events The data frame containing the list of events. The first column of the data frame should be 'event_id'(type Integer) numbering the events from 1 to n. The second column shoud be 'event_date' (type Date). The third column should contain 'company_id' (type Chr).
+#' @param df.events The data frame containing the list of events. The first column of the data frame should be 'event_id' (type Integer) numbering the events from 1 to n. The second column shoud be 'event_date' (type Date). The third column should contain 'company_id' (type Chr).
 #' @param df.stocks The data frame contains the list of trading dates. The first column should contain the dates of trading days (type Date). The second column should contain the values of the market index (type Numeric). The following columns should contain the prices of the companies' securities.
 #' @param event.window The first half of the event window (default is 2, thus the whole event window length is 5).
 #' @param estim.window The length of the estimation window (default is 100). It is adjacent to the beginning of the event window.
@@ -19,9 +19,14 @@ df.ars <- data.frame(event.day = c(-seq(from=event.window, to = 1),0,seq(1:event
 markPrice <- df.stocks[, 2]
 markRet <- c(NA, diff(markPrice) / markPrice[-length(markPrice)])
 
+# clear the console
+cat("\014")
+print("***** EVENT STUDY ANALYSIS *****")
+
 
 for(evId in 1:nrow(df.events)){
     
+    print(paste0("Processing company: ",df.events$firm_id[evId]))
     # calculate security returns
     firmPrice <- df.stocks[, df.events$firm_id[evId]]
     firmRet <- c(NA, diff(firmPrice) / firmPrice[-length(firmPrice)])
@@ -38,9 +43,7 @@ for(evId in 1:nrow(df.events)){
                     (sum(ar.pred)/sd(ar.pred))/sqrt(2*event.window+1) )
     
     names(df.ars)[ncol(df.ars)]<-paste0(df.events$firm_id[evId],"_ev",df.events$event_id[evId])
-    
-    
-    
+        
 }#--- end for evId
 
 # calculate average AR by firms
@@ -58,13 +61,30 @@ for(i in 2:ev.length){
     df.ars$CAR[i]<-df.ars$CAR[i-1]+df.ars$Avg[i]
 }
 
-plot(df.ars$CAR[1:ev.length], type="b", ylab="CAR", xaxt="n", xlab="Event window")
-axis(1, at=c(1:5), labels=df.ars[1:ev.length,1])
-
 # theta-statistic calculation
 df.ars$CAR[ev.length+1]<-ev.length*df.ars$Avg[ev.length+1]
 df.ars$CAR[nrow(df.ars)] <- df.ars$CAR[ev.length]/sqrt(df.ars$CAR[ev.length+1])
 print(paste0("Theta statistic: ", round(df.ars$CAR[nrow(df.ars)],3)))
 print("Values of Theta greater than 1.96 in absolute value are statistically significant.")
+
+
+
+# plot of ARs
+yARlim <- c(-max(abs(df.ars$Avg[1:ev.length]*100)+1),max(abs(df.ars$Avg[1:ev.length]*100)+1))
+plot(df.ars$Avg[1:ev.length]*100, type="l", lwd=2, pch=19, main="AR, %", xaxt="n", yaxt="n", ylab="", xlab="День окна события", ylim=yARlim, bty="n")
+axis(1, at=c(1:ev.length), labels=df.ars[1:ev.length,1], pos=0)
+axis(2, pos=event.window+1, las=1)
+abline(v=event.window+1)
+abline(h=0)
+
+# plot of CARs
+yCARlim <- c(-max(abs(df.ars$CAR[1:ev.length]*100)+1),max(abs(df.ars$CAR[1:ev.length]*100)+1))
+plot(df.ars$CAR[1:ev.length]*100, type="l", lwd=2, pch=19, main="CAR, %", xaxt="n", yaxt="n", xlab="День окна события", ylab="", xaxs="i", yaxs="i", bty="n", ylim=yCARlim)
+axis(1, at=c(1:ev.length), labels=df.ars[1:ev.length,1], pos=0)
+axis(2, pos=event.window+1, las=1)
+abline(v=event.window+1)
+abline(h=0)
+
+# resulting data frame
 return(df.ars)
 }
