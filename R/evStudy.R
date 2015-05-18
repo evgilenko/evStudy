@@ -13,7 +13,7 @@
 
 evStudy <- function(df.events, df.stocks, event.window = 2, estim.window = 100){ 
 
-df.ars <- data.frame(event.day = c(-seq(from=event.window, to = 1),0,seq(1:event.window),"sigma2e", "CARind", "Theta"))
+df.ars <- data.frame(event.day = c(-seq(from=event.window, to = 1),0,seq(1:event.window),"sigma2e", "CARind", "ThetaInd"), stringsAsFactors = F)
 
 ## calculate market returns
 markPrice <- df.stocks[, 2]
@@ -26,32 +26,41 @@ print("***** EVENT STUDY ANALYSIS *****")
 
 for(evId in 1:nrow(df.events)){
     
-    print(paste0("Processing company: ",df.events$firm_id[evId]))
-    # calculate security returns
-    firmPrice <- df.stocks[, df.events$firm_id[evId]]
-    firmRet <- c(NA, diff(firmPrice) / firmPrice[-length(firmPrice)])
+    #print(paste0("Processing company: ",df.events$firm_id[evId]))
     
     # create estimation and prediction subsamples
     evDate <- which(df.stocks$Date == df.events$eventdate[evId])
     est.sample <- seq(from=evDate-event.window-estim.window, to=evDate-event.window-1)
     pred.sample <- seq(from=evDate-event.window, to=evDate+event.window)
     
-    # estimation of market model
-    m.model <- lm(firmRet[est.sample]~markRet[est.sample])
-    ar.pred <- firmRet[pred.sample]-(m.model$coef[1]+m.model$coef[2]*markRet[pred.sample])
-    df.ars$ret <- c(ar.pred, summary(m.model)$sigma^2, sum(ar.pred), 
-                    (sum(ar.pred)/sd(ar.pred))/sqrt(2*event.window+1) )
+    # calculate security returns
+    firmPrice <- df.stocks[, df.events$firm_id[evId]]
+    firmRet <- c(NA, diff(firmPrice) / firmPrice[-length(firmPrice)])
     
-    names(df.ars)[ncol(df.ars)]<-paste0(df.events$firm_id[evId],"_ev",df.events$event_id[evId])
+    if(var(firmPrice[est.sample])!=0 & sum(!is.finite(firmRet[est.sample]))==0){
+                    
+        # estimation of market model
+        m.model <- lm(firmRet[est.sample]~markRet[est.sample])
+        ar.pred <- firmRet[pred.sample]-(m.model$coef[1]+m.model$coef[2]*markRet[pred.sample])
+        df.ars$ret <- c(ar.pred, summary(m.model)$sigma^2, sum(ar.pred), 
+                    (sum(ar.pred)/sd(ar.pred))/sqrt(2*event.window+1) )
+        names(df.ars)[ncol(df.ars)]<-paste0(df.events$firm_id[evId],"_ev",df.events$event_id[evId])
+    } else{
+    print(paste0("Warning! Prices of company ",df.events$firm_id[evId]," have either zero variance or NaNs over the estimation window and are excluded!"))
+    }#--- end of else
         
 }#--- end for evId
+
+df.ars<-rbind(df.ars,c(NA,as.numeric(abs(df.ars[nrow(df.ars),2:ncol(df.ars)])>1.96)))
+df.ars[nrow(df.ars),1]<-"IndTestResults"
 
 # calculate average AR by firms
 Nfirms <- length(2:ncol(df.ars))
 ev.length <- 2*event.window + 1
 
-df.ars$Avg<-c(apply(df.ars[1:(ev.length+2),2:ncol(df.ars)],1,mean),NA)
+df.ars$Avg<-c(apply(df.ars[,2:ncol(df.ars)],1,mean))
 df.ars$Avg[ev.length+1]<-df.ars$Avg[ev.length+1]/Nfirms
+df.ars$ThetaAvgAR<-c(df.ars$Avg[1:ev.length]/sqrt(df.ars$Avg[ev.length+1]),NA,NA,NA,NA)
 
 # calculate CARs
 df.ars$CAR <- NA
@@ -63,23 +72,32 @@ for(i in 2:ev.length){
 
 # theta-statistic calculation
 df.ars$CAR[ev.length+1]<-ev.length*df.ars$Avg[ev.length+1]
-df.ars$CAR[nrow(df.ars)] <- df.ars$CAR[ev.length]/sqrt(df.ars$CAR[ev.length+1])
-print(paste0("Theta statistic: ", round(df.ars$CAR[nrow(df.ars)],3)))
-print("Values of Theta greater than 1.96 in absolute value are statistically significant.")
+df.ars$CAR[nrow(df.ars)-1] <- df.ars$CAR[ev.length]/sqrt(df.ars$CAR[ev.length+1])
+print(paste0("*** Theta statistic: ", round(df.ars$CAR[nrow(df.ars)-1],3)))
+print("*** Values of Theta greater than 1.96 in absolute value are statistically significant.")
 
 
 
 # plot of ARs
 yARlim <- c(-max(abs(df.ars$Avg[1:ev.length]*100)+1),max(abs(df.ars$Avg[1:ev.length]*100)+1))
-plot(df.ars$Avg[1:ev.length]*100, type="l", lwd=2, pch=19, main="AR, %", xaxt="n", yaxt="n", ylab="", xlab="", ylim=yARlim, bty="n")
+plot(df.ars$Avg[1:ev.length]*100, type="l", lwd=2, pch=19, main="AAR, %", xaxt="n", yaxt="n", ylab="", xlab="", ylim=yARlim, bty="n")
 axis(1, at=c(1:ev.length), labels=df.ars[1:ev.length,1], pos=0)
 axis(2, pos=event.window+1, las=1)
 abline(v=event.window+1)
 abline(h=0)
 
+# plot of Thetas for event days
+yThetalim <- c(-max(abs(df.ars$ThetaAvgAR[1:ev.length])+1),max(abs(df.ars$ThetaAvgAR[1:ev.length])+1))
+plot(df.ars$ThetaAvgAR[1:ev.length], type="l", lwd=2, pch=19, main="Theta statistics", xaxt="n", yaxt="n", ylab="", xlab="", ylim=yThetalim, bty="n")
+axis(1, at=c(1:ev.length), labels=df.ars[1:ev.length,1], pos=0)
+axis(2, pos=event.window+1, las=1)
+abline(v=event.window+1)
+abline(h=0)
+abline(h=c(-1.96,1.96), lty=2)
+
 # plot of CARs
 yCARlim <- c(-max(abs(df.ars$CAR[1:ev.length]*100)+1),max(abs(df.ars$CAR[1:ev.length]*100)+1))
-plot(df.ars$CAR[1:ev.length]*100, type="l", lwd=2, pch=19, main="CAR, %", xaxt="n", yaxt="n", xlab="", ylab="", xaxs="i", yaxs="i", bty="n", ylim=yCARlim)
+plot(df.ars$CAR[1:ev.length]*100, type="l", lwd=2, pch=19, main="CAAR, %", xaxt="n", yaxt="n", xlab="", ylab="", xaxs="i", yaxs="i", bty="n", ylim=yCARlim)
 axis(1, at=c(1:ev.length), labels=df.ars[1:ev.length,1], pos=0)
 axis(2, pos=event.window+1, las=1)
 abline(v=event.window+1)
