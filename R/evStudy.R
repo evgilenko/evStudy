@@ -58,9 +58,10 @@ df.ars[nrow(df.ars),1]<-"IndTestResults"
 Nfirms <- length(2:ncol(df.ars))
 ev.length <- 2*event.window + 1
 
-df.ars$Avg<-c(apply(df.ars[,2:ncol(df.ars)],1,mean))
-df.ars$Avg[ev.length+1]<-df.ars$Avg[ev.length+1]/Nfirms
-df.ars$ThetaAvgAR<-c(df.ars$Avg[1:ev.length]/sqrt(df.ars$Avg[ev.length+1]),NA,NA,NA,NA)
+if(Nfirms>1){
+    df.ars$Avg<-c(apply(df.ars[,2:ncol(df.ars)],1,mean))
+    df.ars$Avg[ev.length+1]<-df.ars$Avg[ev.length+1]/Nfirms
+    df.ars$ThetaAvgAR<-c(df.ars$Avg[1:ev.length]/sqrt(df.ars$Avg[ev.length+1]),NA,NA,NA,NA)
 
 # calculate CARs
 df.ars$CAR <- NA
@@ -102,6 +103,8 @@ axis(1, at=c(1:ev.length), labels=df.ars[1:ev.length,1], pos=0)
 axis(2, pos=event.window+1, las=1)
 abline(v=event.window+1)
 abline(h=0)
+
+}#--- end if Nfirms>1
 
 # resulting data frame
 return(df.ars)
