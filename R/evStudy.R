@@ -10,6 +10,7 @@
 #' @examples
 #' evStudy(events, stocks)
 
+# TODO: 1) A separate function for graphs. 2) Check NAs in data befor the estimation window. 3) Check estimation window.
 
 evStudy <- function(df.events, df.stocks, event.window = 2, estim.window = 100){ 
 
@@ -74,8 +75,15 @@ for(i in 2:ev.length){
 # theta-statistic calculation
 df.ars$CAR[ev.length+1]<-ev.length*df.ars$Avg[ev.length+1]
 df.ars$CAR[nrow(df.ars)-1] <- df.ars$CAR[ev.length]/sqrt(df.ars$CAR[ev.length+1])
-print(paste0("*** Theta statistic: ", round(df.ars$CAR[nrow(df.ars)-1],3)))
-print("*** Values of Theta greater than 1.96 in absolute value are statistically significant.")
+
+print("********************************")
+print(paste0("CAAR theta statistic: ", round(df.ars$CAR[nrow(df.ars)-1],3)))
+print("Values of Theta greater than 1.96 in absolute value are statistically significant.")
+print("********************************")
+prop.theta <- df.ars$Avg[nrow(df.ars)]
+print(paste0("The proportion of significant AAR thetas: ", round(prop.theta,4)))
+print(paste0("The number of significant AAR thetas: ", round(prop.theta*Nfirms,4)))
+print(paste0("The number of companies-events: ", Nfirms))
 
 
 
@@ -94,7 +102,8 @@ axis(1, at=c(1:ev.length), labels=df.ars[1:ev.length,1], pos=0)
 axis(2, pos=event.window+1, las=1)
 abline(v=event.window+1)
 abline(h=0)
-abline(h=c(-1.96,1.96), lty=2)
+abline(h=c(-1.96,1.96), lty=5)
+abline(h=c(-1.64,1.64), lty=2)
 
 # plot of CARs
 yCARlim <- c(-max(abs(df.ars$CAR[1:ev.length]*100)+1),max(abs(df.ars$CAR[1:ev.length]*100)+1))
