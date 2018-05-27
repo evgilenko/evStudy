@@ -1,6 +1,6 @@
 Package: evStudy
 Title: The package for event study analysis.
-Version: 0.961
+Version: 1.001
 Authors@R: person("Evgenii", "Gilenko", , "evgilenko@mail.ru", role = c("aut", "cre"))
 Description: The package runs event study calculations using the standard market model.
 Depends: R (>= 3.1.0)
