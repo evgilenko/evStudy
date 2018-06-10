@@ -19,7 +19,6 @@ evCM(Ypred, Ytrue, nclasses, CM.print = T, sample.name = "")
 }
 \description{
 This function calculates a confusion matrix for the provided predicted (in rows) and true (in columns) values. It is also obligatory to provide the actual number of classes. If some of the classes are missed, the function adds the necessary number of zero rows (in case of predictions) or zero columns (in case of true classes) to the classification matrix.
-The function returns a data.frame containing (in the percentage format) overall R^2 count, average sensitivity over categories, and individual sensitivities for each of the classes (by columns of CM).
 }
 \examples{
 evCM(Ypred, Ytrue)
